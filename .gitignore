@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+/tmp/
+.venv/
+venv/
+**/.adk/
+**/__pycache__/
+/brain/
+.gemini/
+data.jsonl
