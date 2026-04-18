@@ -49,12 +49,33 @@ async def run_pipeline(update: Update, bot: Bot):
         active_sessions[chat_id] = f"note_run_{uuid.uuid4().hex[:8]}"
     
     current_session_id = active_sessions[chat_id]
+    user_id = str(chat_id)
     
     msg_content = types.Content(role="user", parts=[types.Part.from_text(text=msg_text)])
     
+    # Explicitly check and create the session in memory before running
+    try:
+        current_session = await session_service.get_session(
+            app_name="igbo-notes-agent-hq", 
+            user_id=user_id, 
+            session_id=current_session_id
+        )
+        if not current_session:
+            await session_service.create_session(
+                app_name="igbo-notes-agent-hq", 
+                user_id=user_id, 
+                session_id=current_session_id
+            )
+    except Exception:
+        await session_service.create_session(
+            app_name="igbo-notes-agent-hq", 
+            user_id=user_id, 
+            session_id=current_session_id
+        )
+
     try:
         # Execute the pipeline using the dynamic session ID
-        async for event in runner.run_async(user_id=str(chat_id), session_id=current_session_id, new_message=msg_content):
+        async for event in runner.run_async(user_id=user_id, session_id=current_session_id, new_message=msg_content):
             author = event.author
             
             # Send messages back to Telegram (ignore internal loops unless it has text)
