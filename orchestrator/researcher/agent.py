@@ -48,21 +48,22 @@ researcher_agent = Agent(
     tools=[fetch_website_content, duckduckgo_web_search],
     output_key="research_context", 
     instruction="""
-ROLE:
-You are an Elite Historical & Geographical Researcher for the Igbo Archives.
+ROLE: Elite Historical & Geographical Researcher.
 
-GOAL:
-Read the completely untouched archive obtained by the discoverer. 
-RAW ARCHIVE METADATA: {discovered_archive}
+GOAL: Extract verbatim supplemental context. 
 
-There are NO notes on this archive. You need to find extra context and place it in the state EXACTLY as you see it. 
-DO NOT rewrite anything or use your mind because you will hallucinate. DO NOT try to identify missing context.
+AVAILABLE DATA:
+- Metadata: {discovered_archive}
+- Blind Vision Report: {vision_report}
+
+STRICT WORKFLOW:
+1. If `original_url` exists, call `fetch_website_content`. 
+2. Formulate 1 or 2 or 3 targeted search query via `duckduckgo_web_search`. Use details from the Metadata and Vision Report to find specific history or ritual significance.
+3. Output the exact text caught, untouched and un-rewritten, with the Source Link/URL. 
 
 STRICT RULES:
-1. If the archive has an `original_url` or a website link, use `fetch_website_content` to read the exact text from that URL.
-2. Also, formulate ONE search query using `duckduckgo_web_search` and find extra context for the archives not in description or original url because the more the extra context, the more notes we can write.
-3. If no `original_url` proceed to get context from duckduckgo_web_search.
-4. Your FINAL output MUST be exactly what you caught/fetched (the exact text and snippet), untouched and un-rewritten, with the Link/URL attached to it.
-5. DO NOT add conversational padding. Just output the verbatim context and its URL.
-"""
+- No rewriting.
+- No conversational padding.
+- No general cultural trivia.
+""".strip()
 )

@@ -5,7 +5,11 @@ from .utils.resilience import ResilientGemini
 from .researcher.agent import researcher_agent
 from .writer.agent import writer_loop
 from .publisher.agent import publisher_agent
+from .vision.agent import execute_vision_analysis
 from .mcp_client import call_mcp_tool
+import os
+import requests
+import tempfile
 
 __all__ = ["root_agent"]
 
@@ -41,6 +45,20 @@ async def fetch_unnoted_archive(ctx: Context) -> dict:
         if isinstance(full_archive_resp, dict) and "id" in full_archive_resp:
             target_archive = full_archive_resp
             
+        # Download image for vision processing
+        image_url = target_archive.get("image") or target_archive.get("thumbnail")
+        if image_url:
+            try:
+                response = requests.get(image_url, timeout=10)
+                if response.status_code == 200:
+                    temp_dir = tempfile.gettempdir()
+                    image_path = os.path.join(temp_dir, f"archive_{target_archive['id']}.jpg")
+                    with open(image_path, "wb") as f:
+                        f.write(response.content)
+                    ctx.state["image_path"] = image_path
+            except Exception as e:
+                print(f"Image download failed: {e}")
+
         # Sets the discovered archive directly into state so the researcher can access it
         ctx.state["discovered_archive"] = target_archive
         ctx.state["target_archive_id"] = target_archive["id"]
@@ -66,21 +84,18 @@ orchestrator = Agent(
     ),
     description="The root supervisor for the Igbo Archives Autonomous Notes System.",
     sub_agents=[notes_pipeline_agent],
-    tools=[fetch_unnoted_archive],
+    tools=[fetch_unnoted_archive, execute_vision_analysis],
     instruction="""
 ROLE:
-You are the Chief Orchestrator of the Igbo Notes Autonomous Creation System.
-
-GOAL:
-Find an archive that has no notes, ensure it's loaded, and trigger the creation pipeline.
+Chief Orchestrator of the Igbo Notes Autonomous Creation System.
 
 STRICT WORKFLOW:
-1. DATA FETCH: Call `fetch_unnoted_archive` to find an archive that needs historical notes.
-2. VALIDATION: Check the response from `fetch_unnoted_archive`. If it returns "DONE" or an error, output "TERMINATE: No archives need notes or an error occurred." and STOP.
-3. PIPELINE TRIGGER: If an archive is successfully found ("FOUND"), call the `execute_notes_pipeline` agent to begin the research, writing, and publication process.
+1. DATA FETCH: Call `fetch_unnoted_archive` to find an unnoted archive. 
+2. BLIND VISION ANALYSIS: Call `execute_vision_analysis`. This performs a purely visual, unbiased check of the image.
+3. VALIDATION: Cross-reference the discovered archive metadata with the vision report. If they mismatch or vision fails, state the reason and STOP.
+4. PIPELINE TRIGGER: If valid, trigger `execute_notes_pipeline`.
 
-RULES:
-Keep your direct responses clinical, professional, and brief.
+RULES: Keep responses clinical, professional, and brief. No conversational filler.
 """.strip()
 )
 
