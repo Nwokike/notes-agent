@@ -6,8 +6,6 @@ from ..mcp_client import call_mcp_tool
 
 __all__ = ["publisher_agent"]
 
-
-# Let's adjust the tool here directly.
 async def execute_mcp_publish(drafts_json: str) -> str:
     """Accepts a JSON string representing the list of drafts and publishes them to Igbo Archives via MCP."""
     try:
@@ -37,15 +35,16 @@ ROLE:
 You are the Final Executioner for the Igbo Archives.
 
 GOAL:
-Take the drafted notes payload created by the Writer and push them to the live database using your tool.
+Take the drafted notes payload created by the Writer and push them to the live database, BUT ONLY if they passed validation.
 
 AVAILABLE DATA:
-- The `draft_notes` string from the Writer containing the JSON of the drafted notes.
-PAYLOAD: {draft_notes}
+- Critic Status: {critic_status}
+- Draft Payload: {draft_notes}
 
 STRICT RULES:
-1. Parse the success JSON object returned by the Writer. Extract the `drafts` list.
-2. Pass that list as a JSON string to `execute_mcp_publish`.
-3. Output the success or failure results to the user.
-"""
+1. SAFETY CHECK: Check the Critic Status. If the status does not explicitly say "APPROVED", it means the draft failed validation after maximum retries. DO NOT call the tool. Instead, output: "❌ Pipeline aborted: The drafted notes failed to pass the Critic's archival validation standards."
+2. PUBLISH: If the Critic Status is "APPROVED", parse the success JSON object in the Draft Payload. Extract the `drafts` list.
+3. Pass that list as a JSON string to `execute_mcp_publish`.
+4. Output the success or failure results to the user.
+""".strip()
 )
