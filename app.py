@@ -9,6 +9,7 @@ if sys.platform == "win32":
     
 from fastapi import FastAPI, Request
 from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
 from telegram import Update, Bot
 from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, filters, ContextTypes
 from google.genai import types
@@ -18,9 +19,12 @@ load_dotenv()
 # --- Agent Imports ---
 from orchestrator.agent import root_agent
 
+session_service = InMemorySessionService()
+
 runner = Runner(
     app_name="igbo-notes-agent-hq",
-    agent=root_agent
+    agent=root_agent,
+    session_service=session_service
 )
 
 # --- State Management ---
