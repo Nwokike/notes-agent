@@ -2,46 +2,34 @@
 
 [![AI-Powered](https://img.shields.io/badge/AI-Autonomous%20Agents-blueviolet)](https://google.github.io/google-adk/)
 [![Powered by Gemma](https://img.shields.io/badge/Powered%20by-Gemma--4-blue)](https://ai.google.dev/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-An enterprise-grade, fully autonomous AI pipeline designed for **Daily Cultural Archiving**. This system preserves Igbo heritage by intelligently finding un-noted archives, performing live web research for historical context, and publishing validated notes to the [Igbo Archives](https://igboarchives.com.ng) platform via an MCP client.
+An enterprise-grade, fully autonomous AI pipeline designed for **Daily Cultural Archiving**. This system preserves Igbo heritage by intelligently finding un-noted archives, performing targeted web research for deep historical context, and publishing validated notes to the [Igbo Archives](https://igboarchives.com.ng) platform.
 
-## 🏗️ Architecture: The Agent Hive
-The system follows a **Sequential Pipeline** leveraging Google ADK routing:
+## 🏗️ Architecture
+The system follows a **Sequential Pipeline** leveraging Google ADK:
 
-- **Orchestrator**: Scans the archives API using MCP tools and finds an archive needing historically rich notes.
-- **Context Researcher (RAG)**: A DuckDuckGo-powered retrieval agent that scours the internet for extra geographical and historical context.
-- **Synthesis Writer & Critic Loop**: Generates comprehensive, factually accurate critical community notes formatted strictly in Editor.js payload structures, validated by an internal critic to prevent hallucinations.
-- **Publisher**: The final executioner. Pushes the approved payload to the remote MCP server.
+- **Orchestrator**: Scans the archives API using an MCP client to find an archive needing notes, and initiates a contextual vision analysis of the image to anchor the metadata.
+- **Researcher**: An entity-extracting retrieval agent that scrapes the original archive URL and scours the internet for highly specific geographical and historical context.
+- **Writer & Critic Loop**: Synthesizes the gathered research into purely factual, zero-fluff community notes formatted as Editor.js blocks. An internal critic ruthlessly validates the drafts against strict archival standards to prevent hallucinations.
+- **Publisher**: The final executioner. Pushes the fully approved Editor.js payload to the remote Igbo Archives database.
 
 ## 🛠️ Tech Stack
--   **Framework**: Google ADK (2026)
--   **LLM Engine**: Google Gemma 4 (31b-it for Orchestration/Reasoning, 26b-a4b-it for strict formatting tasks) via a resilient fallback configuration.
+-   **Framework**: Google ADK
+-   **LLM Engine**: Google Gemma 4 (Resilient fallback configuration routing between `31b-it` and `26b-a4b-it`)
 
 ## 🚀 Installation & Usage
 
 ### 1. Setup
 ```bash
-# Clone & Sync
-git clone https://github.com/Nwokike/Notes-Agent.git
+git clone [https://github.com/Nwokike/Notes-Agent.git](https://github.com/Nwokike/Notes-Agent.git)
 cd notes-agent
 uv sync
-
 ```
 
-### 2. Run the Production Suite
-The app auto-detects its environment. It runs a Polling Bot locally, or a Webhook + Cloud Tasks worker in production.
+### 2. Run the Agent
+The app auto-detects its environment. It runs a Telegram Polling Bot locally or a Webhook on a cloud service like Render.
 ```bash
-# Start the Telegram Bot + Dynamic Status Streaming
+# Start the Telegram Bot Interface
 uv run python app.py
 ```
-
-### 3. Debug with ADK Web UI
-Visualize the agent trace, session states, and artifact generation locally:
-```bash
-# Start the ADK Dev Server
-uv run adk web
-```
-
-## 🧠 State Management
-This pipeline utilizes ADK's Shared Session State to pass variables (`raw_metadata`, `vision_report`, `research_context`, `critic_status`) seamlessly between agents without prompt stuffing, ensuring maximum token efficiency and clean separation of concerns.
+*Once running, simply send `/new` or any message to the Telegram bot to trigger the autonomous pipeline.*
