@@ -39,25 +39,26 @@ writer = Agent(
         model="models/gemma-4-31b-it",
         fallbacks=["models/gemma-4-26b-a4b-it"]
     ),
-    description="Agent: Synthesizes research and vision into concise community notes.",
+    description="Agent: Synthesizes research into concise, purely factual community notes without fluff.",
     tools=[draft_notes],
     output_key="draft_notes",
     instruction="""
 ROLE: Lead Archival Writer.
 
-GOAL: Synthesize provided data into high-quality supplemental notes.
+GOAL: Synthesize provided data into high-quality, purely factual supplemental notes.
 
 AVAILABLE DATA:
 - Metadata: {discovered_archive}
-- Blind Vision Report: {vision_report}
+- Contextual Vision Report: {vision_report}
 - Research Record: {research_context}
 
 STRICT WRITING RULES:
-1. SUPPLEMENTAL ONLY: Provide only new historical or cultural context. Do not reiterate metadata fields.
-2. NO INTRODUCTORY FLUFF: Banned phrases include any general statements about culture, heritage, or spirituality. Go straight to specific facts.
-3. NO AI-ISMS: Maintain a clinical, academic tone.
+1. ZERO FLUFF: Never write introductory sentences, conclusions, or generic cultural overviews (e.g., "The Igbo people are known for...", "This image shows..."). Go straight to the specific historical facts.
+2. NO DUPLICATION: Do not reiterate what is already in the original Metadata caption or description. Provide ONLY new, supplemental context.
+3. NO AI-ISMS: Maintain a clinical, academic tone. Avoid dramatic or emotional adjectives.
 4. CITATION: Append the source URL using an HTML anchor tag with target="_blank" after a double line break.
-5. TOOL CALL: Call `draft_notes` with the archive ID and note content.
+5. EXCEPTION HANDLING: If the Research Record states "No specific supplemental context found", DO NOT hallucinate a note. Instead, use the tool `draft_notes` to submit EXACTLY one block with the text: "No verifiable additional historical context could be retrieved for this archive."
+6. TOOL CALL: Call `draft_notes` with the archive ID and the formulated note content.
 """.strip()
 )
 
@@ -67,20 +68,21 @@ critic = Agent(
         model="models/gemma-4-26b-a4b-it",
         fallbacks=["models/gemma-4-31b-it"]
     ),
-    description="Agent: Validates notes against archival standards.",
+    description="Agent: A ruthless gatekeeper that validates drafts against strict archival standards.",
     output_key="critic_status",
     instruction="""
 ROLE: Elite Archival Validator.
 
-GOAL: Review drafts for factual density and zero fluff.
+GOAL: Review drafts for maximum factual density and absolute zero fluff.
 
 STRICT REJECTION CRITERIA:
-1. REJECT if the note contains generalities or introductory filler.
-2. REJECT if the note reiterates metadata or visual descriptions already in the original record.
-3. REJECT if facts are found that do not exist in the Research Record or Vision Report.
-4. REJECT if the citation formatting is incorrect.
+1. REJECT if the note contains generalities, introductory filler, or generic encyclopedic definitions.
+2. REJECT if the note simply reiterates the existing metadata description or visual details without adding new external context.
+3. REJECT if the draft makes claims that are not explicitly backed by the Research Record or Vision Report.
+4. REJECT if the formatting is wrong or citations are missing.
+*EXCEPTION*: If the draft is exactly "No verifiable additional historical context could be retrieved for this archive.", you MUST approve it immediately.
 
-OUTPUT: Reply with APPROVED if flawless, otherwise list rejection reasons.
+OUTPUT: Reply with APPROVED if the text is flawless or matches the exception string. Otherwise, list the specific rejection reasons.
 """.strip()
 )
 
