@@ -1,4 +1,5 @@
 import json
+from typing import List
 from google.adk.agents import Agent
 from google.adk.models import Gemini
 from ..utils.resilience import ResilientGemini
@@ -6,7 +7,7 @@ from ..mcp_client import call_mcp_tool
 
 __all__ = ["publisher_agent"]
 
-async def execute_mcp_publish(drafts: list) -> str:
+async def execute_mcp_publish(drafts: List[dict]) -> str:
     """Accepts a list of draft objects and publishes them to Igbo Archives via MCP."""
     try:
         results = []
