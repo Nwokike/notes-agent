@@ -21,7 +21,7 @@ The system follows a **Sequential Pipeline** leveraging Google ADK:
 
 ### 1. Setup
 ```bash
-git clone [https://github.com/Nwokike/Notes-Agent.git](https://github.com/Nwokike/Notes-Agent.git)
+git clone https://github.com/Nwokike/Notes-Agent.git
 cd notes-agent
 uv sync
 ```
