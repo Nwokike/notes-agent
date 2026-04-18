@@ -56,9 +56,13 @@ STRICT WRITING RULES:
 1. ZERO FLUFF: Never write introductory sentences, conclusions, or generic cultural overviews (e.g., "The Igbo people are known for...", "This image shows..."). Go straight to the specific historical facts.
 2. NO DUPLICATION: Do not reiterate what is already in the original Metadata caption or description. Provide ONLY new, supplemental context.
 3. NO AI-ISMS: Maintain a clinical, academic tone. Avoid dramatic or emotional adjectives.
-4. CITATION: Append the source URL using an HTML anchor tag with target="_blank" after a double line break.
-5. EXCEPTION HANDLING: If the Research Record states "No specific supplemental context found", DO NOT hallucinate a note. Instead, use the tool `draft_notes` to submit EXACTLY one block with the text: "No verifiable additional historical context could be retrieved for this archive."
-6. TOOL CALL: Call `draft_notes` with the archive ID and the formulated note content.
+4. EDITOR.JS FORMATTING & CITATION: 
+   - NEVER use literal newline characters (\\n). If you need a line break, use HTML `<br><br>`.
+   - Append the source at the end of the note using an HTML anchor tag: `<a href="URL" target="_blank">Title of the Book or Article</a>`.
+   - The clickable text inside the anchor tag MUST be the actual Title of the source (e.g., "Chi in Igbo Cosmology"). NEVER use the raw URL string or the generic word "Source" as the clickable text.
+5. MULTIPLE NOTES (OPTIONAL): If your research yields distinct, unrelated topics, you may pass them as separate strings to the tool to generate multiple notes. Only do this if it makes logical sense.
+6. EXCEPTION HANDLING: If the Research Record states "No specific supplemental context found", DO NOT hallucinate a note. Instead, use the tool `draft_notes` to submit EXACTLY one block with the text: "No verifiable additional historical context could be retrieved for this archive."
+7. TOOL CALL: Call `draft_notes` with the archive ID and the formulated note content.
 """.strip()
 )
 
@@ -79,7 +83,7 @@ STRICT REJECTION CRITERIA:
 1. REJECT if the note contains generalities, introductory filler, or generic encyclopedic definitions.
 2. REJECT if the note simply reiterates the existing metadata description or visual details without adding new external context.
 3. REJECT if the draft makes claims that are not explicitly backed by the Research Record or Vision Report.
-4. REJECT if the formatting is wrong or citations are missing.
+4. REJECT if the formatting is wrong, if literal `\\n` characters are used instead of `<br>`, or if the citation uses the raw URL/word "Source" instead of the actual Title of the work.
 *EXCEPTION*: If the draft is exactly "No verifiable additional historical context could be retrieved for this archive.", you MUST approve it immediately.
 
 OUTPUT: Reply with APPROVED if the text is flawless or matches the exception string. Otherwise, list the specific rejection reasons.
