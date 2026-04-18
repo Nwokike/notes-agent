@@ -36,8 +36,8 @@ def draft_notes(archive_id: int, note_texts: List[str]) -> str:
 writer = Agent(
     name="WriterAgent",
     model=ResilientGemini(
-        model="models/gemma-4-31b-it",
-        fallbacks=["models/gemma-4-26b-a4b-it"]
+        model="models/gemini-3.1-flash-lite-preview",
+        fallbacks=["models/gemma-4-31b-it", "models/gemma-4-26b-a4b-it"]
     ),
     description="Agent: Synthesizes research into concise, purely factual community notes without fluff.",
     tools=[draft_notes],
