@@ -21,8 +21,9 @@ def _encode_and_compress_image(image_path: str, max_size=(1024, 1024)) -> str:
         return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
 async def execute_vision_analysis(ctx: Context) -> str:
-    """Unbiased blind cultural heritage visual analysis."""
+    """Contextual visual analysis grounded in the archive's metadata."""
     image_path = ctx.state.get("image_path")
+    discovered_archive = ctx.state.get("discovered_archive", {})
     
     if not image_path or not os.path.exists(image_path):
         return "ERROR: Image not found for analysis."
@@ -32,14 +33,23 @@ async def execute_vision_analysis(ctx: Context) -> str:
         client = genai.Client(http_options=types.HttpOptions(timeout=120_000))
         models_to_try = ["models/gemma-4-31b-it", "models/gemma-4-26b-a4b-it"]
         
+        # Build a context-aware prompt using the fetched metadata
+        prompt = (
+            "ROLE: Elite Contextual Heritage Visual Analyst.\n"
+            "GOAL: Examine the provided image while cross-referencing it with its known archival metadata.\n"
+            f"METADATA CONTEXT: {discovered_archive}\n"
+            "STRICT RULES:\n"
+            "1. Do NOT guess the context blindly. Use the Metadata Context to anchor your visual observations.\n"
+            "2. Extract highly specific visual details that complement the metadata (e.g., specific clothing, architectural styles, distinct objects, or geographical markers visible in the background).\n"
+            "3. NO introductory fluff. Do not say 'This image shows'. Output strictly as a clinical, factual observational report."
+        )
+        
         for model_name in models_to_try:
             try:
                 response = await client.aio.models.generate_content(
                     model=model_name,
                     contents=[
-                        "ROLE: Elite Cultural Heritage Visual Analyst.\n"
-                        "GOAL: Meticulously examine the provided image and extract a purely visual, unbiased cultural report.\n"
-                        "STRICT RULES: No hallucination. No introductory fluff. Output as a clinical observational report.",
+                        prompt,
                         types.Part.from_bytes(
                             data=base64.b64decode(base64_image),
                             mime_type="image/jpeg"
