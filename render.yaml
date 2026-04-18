@@ -4,20 +4,14 @@ services:
     env: python
     plan: free
     healthCheckPath: /
-    # The build command installs uv, then uses it to strictly install your lockfile
     buildCommand: "pip install uv && uv sync --frozen --no-dev"
-    # The start command uses uv to run uvicorn from the virtual environment it just built
     startCommand: "uv run uvicorn app:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: PYTHON_VERSION
-        value: "3.13.0" # Matches your previous Docker setup
+        value: "3.13.0"
       - key: TELEGRAM_BOT_TOKEN
         sync: false
-      - key: TELEGRAM_WEBHOOK_URL
+      - key: GOOGLE_API_KEY
         sync: false
-      - key: NEON_DATABASE_URL
+      - key: IGBO_ARCHIVES_TOKEN
         sync: false
-      - key: GROQ_API_KEY
-        sync: false
-      - key: TARGET_DATASET
-        value: "nwokikeonyeka/maa-cambridge-south-eastern-nigeria"

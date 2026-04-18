@@ -9,3 +9,4 @@ venv/
 /brain/
 .gemini/
 data.jsonl
+/.adk/

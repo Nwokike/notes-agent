@@ -1,17 +1,10 @@
-import os
 import json
 from google.adk.agents import Agent
-from google.adk.models.lite_llm import LiteLlm
-from google.adk.tools import ToolContext
-from ...mcp_client import call_mcp_tool
+from google.adk.models import Gemini
+from ..utils.resilience import ResilientGemini
+from ..mcp_client import call_mcp_tool
 
 __all__ = ["publisher_agent"]
-
-publisher_model = LiteLlm(
-    model="groq/openai/gpt-oss-20b",
-    fallbacks=["groq/qwen/qwen3-32b", "groq/moonshotai/kimi-k2-instruct", "gemini/gemma-4-26b-it", "gemini/gemma-4-31b-it"]
-)
-
 
 
 # Let's adjust the tool here directly.
@@ -33,7 +26,10 @@ async def execute_mcp_publish(drafts_json: str) -> str:
 
 publisher_agent = Agent(
     name="PublisherAgent",
-    model=publisher_model,
+    model=ResilientGemini(
+        model="models/gemma-4-31b-it",
+        fallbacks=["models/gemma-4-26b-a4b-it"]
+    ),
     description="Agent: The final record publisher that submits notes.",
     tools=[execute_mcp_publish],
     instruction="""

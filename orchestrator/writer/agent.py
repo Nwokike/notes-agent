@@ -1,25 +1,14 @@
-import os
 import json
 import uuid
 from google.genai import types
 from google.adk.agents import Agent, LoopAgent, BaseAgent
-from google.adk.models.lite_llm import LiteLlm
+from google.adk.models import Gemini
+from ..utils.resilience import ResilientGemini
 from google.adk.events import Event, EventActions
 from typing import List
-from ...schema import ArchiveNoteCreate, EditorJsContent, EditorJsBlock, EditorJsBlockData
+from ..schema import ArchiveNoteCreate, EditorJsContent, EditorJsBlock, EditorJsBlockData
 
 __all__ = ["writer_loop"]
-
-# Using kimi-k2-instruct for Apex agentic complex synthesis tasks
-writer_model = LiteLlm(
-    model="groq/moonshotai/kimi-k2-instruct",
-    fallbacks=["groq/openai/gpt-oss-120b", "groq/qwen/qwen3-32b", "gemini/gemma-4-31b-it", "gemini/gemma-4-26b-it"]
-)
-
-critic_model = LiteLlm(
-    model="groq/llama-3.3-70b-versatile",
-    fallbacks=["groq/moonshotai/kimi-k2-instruct", "groq/moonshotai/kimi-k2-instruct-0905"]
-)
 
 def draft_notes(archive_id: int, note_texts: List[str]) -> str:
     """Takes a list of finalized note string contents, packages them into Editor.js json format, and saves them to session draft."""
@@ -46,7 +35,10 @@ def draft_notes(archive_id: int, note_texts: List[str]) -> str:
 
 writer = Agent(
     name="WriterAgent",
-    model=writer_model,
+    model=ResilientGemini(
+        model="models/gemma-4-31b-it",
+        fallbacks=["models/gemma-4-26b-a4b-it"]
+    ),
     description="Agent: Synthesizes historical research into 2 to 4 concise community notes.",
     tools=[draft_notes],
     output_key="draft_notes",
@@ -59,19 +51,23 @@ Read the completely untouched archive obtained by the discoverer and the raw tex
 RAW ARCHIVE METADATA: {discovered_archive}
 RESEARCH RECORD: {research_context}
 
-Write 2 to 4 distinct, engaging, and historically accurate short community notes base on the metadata and exact research context text. 
+Write 1, or 2 or 3 distinct, engaging, and historically accurate short community notes based ONLY on the extra context found by the researcher.
 
 STRICT RULES:
-1. NO AI-LIKE LANGUAGE. Be factual, straight to the point, and write like an academic or community elder. NO "In conclusion", "As seen in the image", "Fascinatingly", etc.
-2. The URL must be cited exactly attached to the end of the note using HTML exactly like this: <br><br><a href="URL_HERE" target="_blank">Title of Source</a>
-3. Call the `draft_notes` tool with the `archive_id` (from metadata) and the list of HTML-formatted note strings you wrote.
-4. After calling the tool and it succeeds, just say "Drafting complete."
+1. ONLY EXTRA CONTEXT: Your notes MUST exclusively provide new, supplementary historical or cultural background drawn from the RESEARCH RECORD. DO NOT repeat or reiterate information that is already present in the RAW ARCHIVE METADATA (such as photographer name, dates, visual descriptions of what people are wearing, or locations already stated).
+2. NO AI-LIKE LANGUAGE. Be factual, straight to the point, and write like an academic or community elder. NO "In conclusion", "As seen in the image", "Fascinatingly", etc.
+3. The URL must be cited exactly attached to the end of the note using HTML exactly like this: <br><br><a href="URL_HERE" target="_blank">Title of Source</a>
+4. Call the `draft_notes` tool with the `archive_id` (from metadata) and the list of HTML-formatted note strings you wrote.
+5. After calling the tool and it succeeds, just say "Drafting complete."
 """
 )
 
 critic = Agent(
     name="CriticAgent",
-    model=critic_model,
+    model=ResilientGemini(
+        model="models/gemma-4-26b-a4b-it",
+        fallbacks=["models/gemma-4-31b-it"]
+    ),
     description="Agent: Evaluates the draft notes and enforces formatting rules.",
     output_key="critic_status",
     instruction="""
@@ -88,7 +84,8 @@ AVAILABLE DATA:
 STRICT RULES (REJECT THE DRAFT IF ANY OF THESE FAIL):
 1. REJECT if the draft contains AI-isms ('In conclusion', 'Fascinatingly', 'delve', etc.).
 2. REJECT if the draft hallucinates completely made-up facts NOT found in the raw metadata OR the research context.
-3. REJECT if the Writer failed to append the URL using the exact HTML format.
+3. REJECT if the draft reiterates or summarizes information already present in the raw metadata (e.g., photographer, date, visual description, location). Notes must contain ONLY extra, supplementary context from the research.
+4. REJECT if the Writer failed to append the URL using the exact HTML format.
 
 OUTPUT MANDATE:
 - If the draft is flawless, you MUST reply with exactly one word: APPROVED.

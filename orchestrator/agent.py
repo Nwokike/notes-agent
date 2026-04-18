@@ -1,24 +1,13 @@
-import os
-import json
-import asyncio
 from google.adk.agents import Agent, SequentialAgent, Context
-from google.adk.models.lite_llm import LiteLlm
+from google.adk.models import Gemini
+from .utils.resilience import ResilientGemini
 
-from .subagents.researcher.agent import researcher_agent
-from .subagents.writer.agent import writer_loop
-from .subagents.publisher.agent import publisher_agent
+from .researcher.agent import researcher_agent
+from .writer.agent import writer_loop
+from .publisher.agent import publisher_agent
 from .mcp_client import call_mcp_tool
 
 __all__ = ["root_agent"]
-
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-
-# Supervisor using kimi or gpt-oss-20b
-orchestrator_model = LiteLlm(
-    model="groq/openai/gpt-oss-20b",
-    api_key=GROQ_API_KEY,
-    fallbacks=["groq/qwen/qwen3-32b", "gemini/gemma-4-26b-it", "gemini/gemma-4-31b-it"]
-)
 
 async def fetch_unnoted_archive(ctx: Context) -> dict:
     """Fetches all archives and notes, finds an archive without notes, and sets it in global state."""
@@ -47,6 +36,11 @@ async def fetch_unnoted_archive(ctx: Context) -> dict:
         if not target_archive:
             return {"status": "DONE", "message": "All archives currently have notes!"}
             
+        # Fetch the FULL archive metadata
+        full_archive_resp = await call_mcp_tool("igbo-archives", "retrieve_archives", {"kwargs": {"slug": target_archive["slug"]}})
+        if isinstance(full_archive_resp, dict) and "id" in full_archive_resp:
+            target_archive = full_archive_resp
+            
         # Sets the discovered archive directly into state so the researcher can access it
         ctx.state["discovered_archive"] = target_archive
         ctx.state["target_archive_id"] = target_archive["id"]
@@ -66,7 +60,10 @@ notes_pipeline_agent = SequentialAgent(
 # The root orchestrator
 orchestrator = Agent(
     name="orchestrator",
-    model=orchestrator_model,
+    model=ResilientGemini(
+        model="models/gemma-4-31b-it",
+        fallbacks=["models/gemma-4-26b-a4b-it"]
+    ),
     description="The root supervisor for the Igbo Archives Autonomous Notes System.",
     sub_agents=[notes_pipeline_agent],
     tools=[fetch_unnoted_archive],

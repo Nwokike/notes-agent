@@ -1,16 +1,10 @@
-import os
 import asyncio
 from ddgs import DDGS
 from google.adk.agents import Agent
-from google.adk.models.lite_llm import LiteLlm
+from google.adk.models import Gemini
+from ..utils.resilience import ResilientGemini
 
 __all__ = ["researcher_agent"]
-
-# Using gpt-oss-120b for deep reasoning and STEM equivalent tasks
-research_model = LiteLlm(
-    model="groq/openai/gpt-oss-120b",
-    fallbacks=["groq/qwen/qwen3-32b", "groq/openai/gpt-oss-20b", "gemini/gemma-4-31b-it", "gemini/gemma-4-26b-it"]
-)
 
 import httpx
 from bs4 import BeautifulSoup
@@ -33,6 +27,7 @@ async def duckduckgo_web_search(query: str) -> str:
     """Searches the internet for historical and geographical context."""
     try:
         def _search():
+            # Use the provided historical logic
             results = DDGS().text(query, max_results=4)
             results = list(results)
             if not results:
@@ -45,7 +40,10 @@ async def duckduckgo_web_search(query: str) -> str:
 
 researcher_agent = Agent(
     name="ResearcherAgent",
-    model=research_model,
+    model=ResilientGemini(
+        model="models/gemma-4-26b-a4b-it",
+        fallbacks=["models/gemma-4-31b-it"]
+    ),
     description="Agent: Checks the archive URL for extra context, or searches the internet if it's missing.",
     tools=[fetch_website_content, duckduckgo_web_search],
     output_key="research_context", 
@@ -62,8 +60,9 @@ DO NOT rewrite anything or use your mind because you will hallucinate. DO NOT tr
 
 STRICT RULES:
 1. If the archive has an `original_url` or a website link, use `fetch_website_content` to read the exact text from that URL.
-2. If `original_url` is missing or the scrape fails, formulate ONE search query using `duckduckgo_web_search` and find context.
-3. Your FINAL output MUST be exactly what you caught/fetched (the exact text and snippet), untouched and un-rewritten, with the Link/URL attached to it.
-4. DO NOT add conversational padding. Just output the verbatim context and its URL.
+2. Also, formulate ONE search query using `duckduckgo_web_search` and find extra context for the archives not in description or original url because the more the extra context, the more notes we can write.
+3. If no `original_url` proceed to get context from duckduckgo_web_search.
+4. Your FINAL output MUST be exactly what you caught/fetched (the exact text and snippet), untouched and un-rewritten, with the Link/URL attached to it.
+5. DO NOT add conversational padding. Just output the verbatim context and its URL.
 """
 )
