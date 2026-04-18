@@ -32,18 +32,23 @@ active_sessions = {}
 
 # --- Main Pipeline Execution ---
 async def safe_send_message(bot: Bot, chat_id: int, text: str):
-    """Sends a message to Telegram, truncating if it exceeds the 4096 character limit."""
+    """Sends a message to Telegram, splitting it into chunks if it exceeds the 4000 character limit."""
     if not text:
         return
     
-    # 4000 is a safe limit to account for headers/formatting
-    if len(text) > 4000:
-        text = text[:4000] + "\n\n...[Content Truncated for Telegram]"
+    # Telegram's hard limit is 4096. We use 4000 to be safe with formatting.
+    chunk_size = 4000
     
-    try:
-        await bot.send_message(chat_id=chat_id, text=text)
-    except Exception as e:
-        print(f"Failed to send message: {e}")
+    # Split the text into manageable chunks
+    chunks = [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
+    
+    for chunk in chunks:
+        try:
+            await bot.send_message(chat_id=chat_id, text=chunk)
+            # Sleep briefly to avoid triggering Telegram's rate limits when sending multiple chunks
+            await asyncio.sleep(0.3)
+        except Exception as e:
+            print(f"Failed to send message: {e}")
 
 # --- Main Pipeline Execution ---
 async def run_pipeline(update: Update, bot: Bot):
