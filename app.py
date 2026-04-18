@@ -31,6 +31,21 @@ runner = Runner(
 active_sessions = {}
 
 # --- Main Pipeline Execution ---
+async def safe_send_message(bot: Bot, chat_id: int, text: str):
+    """Sends a message to Telegram, truncating if it exceeds the 4096 character limit."""
+    if not text:
+        return
+    
+    # 4000 is a safe limit to account for headers/formatting
+    if len(text) > 4000:
+        text = text[:4000] + "\n\n...[Content Truncated for Telegram]"
+    
+    try:
+        await bot.send_message(chat_id=chat_id, text=text)
+    except Exception as e:
+        print(f"Failed to send message: {e}")
+
+# --- Main Pipeline Execution ---
 async def run_pipeline(update: Update, bot: Bot):
     chat_id = update.effective_chat.id
     msg_text = update.message.text.strip() if update.message.text else ""
@@ -38,7 +53,8 @@ async def run_pipeline(update: Update, bot: Bot):
     # Handle the /new command
     if msg_text.startswith("/new"):
         active_sessions[chat_id] = f"note_run_{uuid.uuid4().hex[:8]}"
-        await bot.send_message(
+        await safe_send_message(
+            bot=bot,
             chat_id=chat_id, 
             text="🔄 Memory cleared. Send a message like 'Start' to begin the autonomous note-creation pipeline."
         )
@@ -82,25 +98,31 @@ async def run_pipeline(update: Update, bot: Bot):
             if author and author not in ["user", "system"]:
                 event_text = ""
                 if event.content and event.content.parts:
-                    event_text = "".join([getattr(p, 'text', '') for p in event.content.parts if getattr(p, 'text', '')]).strip()
+                    # Cleanly extract text parts, ignoring function calls/nulls
+                    parts = []
+                    for part in event.content.parts:
+                        text_val = getattr(part, 'text', None)
+                        if text_val:
+                            parts.append(text_val)
+                    event_text = "".join(parts).strip()
 
                 if event_text:
-                    await bot.send_message(
+                    await safe_send_message(
+                        bot=bot,
                         chat_id=chat_id, 
                         text=f"{author.upper()}:\n{event_text}"
                     )
                     
                     if author == "publisher" and "successfully published" in event_text.lower():
-                        await bot.send_message(
+                        await safe_send_message(
+                            bot=bot,
                             chat_id=chat_id,
                             text="✅ Note creation and publication completed successfully!\nSend /new to start on a new archive."
                         )
 
     except Exception as e:
         error_msg = f"Error: {str(e)}"
-        if len(error_msg) > 4000:
-            error_msg = error_msg[:4000] + "\n...[Error Truncated]"
-        await bot.send_message(chat_id, error_msg)
+        await safe_send_message(bot, chat_id, error_msg)
 
 
 # --- Webhook Mode (Render Web Service) ---
