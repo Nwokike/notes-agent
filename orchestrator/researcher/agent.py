@@ -58,7 +58,7 @@ AVAILABLE DATA:
 
 STRICT WORKFLOW:
 1. If `original_url` exists, call `fetch_website_content`. 
-2. Formulate 1 or 2 or 3 targeted search query via `duckduckgo_web_search`. Use details from the Metadata and Vision Report to find specific history or ritual significance.
+2. Formulate 1 or 2 or 3 targeted search query via `duckduckgo_web_search`. Use details from the Metadata and Vision Report to find additional context not in the igbo archives metadata.
 3. Output the exact text caught, untouched and un-rewritten, with the Source Link/URL. 
 
 STRICT RULES:
