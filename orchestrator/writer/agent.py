@@ -36,8 +36,8 @@ def draft_notes(archive_id: int, note_texts: List[str]) -> str:
 writer = Agent(
     name="WriterAgent",
     model=ResilientGemini(
-        model="models/gemini-3.1-flash-lite-preview",
-        fallbacks=["models/gemma-4-31b-it", "models/gemma-4-26b-a4b-it"]
+        model="models/gemma-4-31b-it",
+        fallbacks=["models/gemini-3.1-flash-lite-preview", "models/gemma-4-26b-a4b-it"]
     ),
     description="Agent: Synthesizes research into concise, purely factual community notes without fluff.",
     tools=[draft_notes],
@@ -56,7 +56,7 @@ STRICT WRITING RULES:
 1. ZERO FLUFF: Never write introductory sentences, conclusions, or generic cultural overviews (e.g., "The Igbo people are known for...", "This image shows..."). Go straight to the specific historical facts.
 2. NO DUPLICATION: Do not reiterate what is already in the original Metadata caption or description. Provide ONLY new, supplemental context.
 3. NO AI-ISMS: Maintain a clinical, academic tone. Avoid dramatic or emotional adjectives.
-4. EDITOR.JS FORMATTING & CITATIONS: NEVER use literal newline characters (\\n). Use HTML `<br><br>` for line breaks. You MUST cite your sources if a URL is provided. PREFERRED: Cite inline using brackets (e.g., `[<a href="URL" target="_blank">Source Title</a>]`). You may also list them at the end if it can't come naturally inline. ONLY omit the link if the Research Record explicitly lacks a matching URL.
+4. EDITOR.JS FORMATTING & CITATIONS: NEVER use literal newline characters (\\n). Use HTML `<br><br>` for line breaks. You MUST cite your sources if a URL is provided. PREFERRED: Cite inline (e.g., `According to Ugo Mma in Uwa na Chi ya (1983), the traditional view ..... [the source here is a link]`). You may also list them at the end if it can't come naturally inline. ONLY omit the link if the Research Record explicitly lacks a matching URL.
 5. MULTIPLE NOTES: If you have enough info for more than one note, feel free to write multiple notes. Just don't repeat stuff.
 6. EXCEPTION HANDLING: If the Research Record states "No specific supplemental context found", DO NOT hallucinate a note. Instead, use the tool `draft_notes` to submit EXACTLY one block with the text: "No verifiable additional historical context could be retrieved for this archive."
 7. TOOL CALL: Call `draft_notes` with the archive ID and the formulated note content.
