@@ -58,7 +58,7 @@ STRICT WRITING RULES:
 3. ORGANIC CITATIONS: If the Research agent provides a source URL, weave it naturally and flexibly into the narrative (e.g., citing it inline, parenthetically, or organically as part of a sentence like 'According to...'). Vary your citation style so it sounds human. Always use an HTML anchor tag with the actual title.
 4. NO FORCED CITATIONS: If no specific URL is provided for a fact, do NOT try to force a citation and do NOT mention the lack of a link. Just state the fact clearly.
 5. NO DUPLICATION: Do not reiterate what is already in the archive Metadata. Provide ONLY new, supplemental context.
-6. FORMATTING: NEVER use literal newline characters (\\n). Use HTML `<br><br>` for line breaks. 
+6. FORMATTING: NEVER use literal newline characters (\\n). Use HTML `<br><br>` for line breaks. NEVER use Markdown formatting like `**` for bold or `*` for italics. If you must emphasize text, use standard HTML tags like `<b>` or `<i>`.
 7. EXCEPTION HANDLING: If the Research agent explicitly states no new context was found, do not hallucinate. Use the `draft_notes` tool to submit EXACTLY one block with the text: "No verifiable additional historical context could be retrieved for this archive."
 8. TOOL CALL: Call `draft_notes` with the archive ID and your formulated note(s).
 """.strip()
@@ -83,7 +83,7 @@ STRICT REJECTION CRITERIA:
 3. REJECT if the writer artificially generated multiple notes when the context clearly only supported one single point or should be one note.
 4. REJECT if citations feel robotic, repetitive in structure across notes, or are awkwardly forced when no actual URL was provided in the source data.
 5. REJECT if the draft simply reiterates the existing archive metadata without adding new external context.
-6. REJECT if literal `\\n` characters are used instead of `<br><br>`.
+6. REJECT if invalid formatting is used: literal `\\n` characters instead of `<br><br>`, or ANY Markdown emphasis (like `**bold**` or `*italics*`) instead of HTML tags.
 *EXCEPTION*: If the drafted note is exactly "No verifiable additional historical context could be retrieved for this archive.", you MUST approve it immediately.
 
 OUTPUT: Reply with APPROVED if the text is flawless or matches the exception string. Otherwise, list the specific rejection reasons.
