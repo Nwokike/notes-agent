@@ -53,21 +53,22 @@ AVAILABLE DATA:
 - Research Record: {research_context}
 
 STRICT WRITING RULES:
-1. ZERO FLUFF: Never write introductory sentences, conclusions, or generic cultural overviews (e.g., "The Igbo people are known for...", "This image shows..."). Go straight to the specific historical facts.
-2. NO DUPLICATION: Do not reiterate what is already in the original Metadata caption or description. Provide ONLY new, supplemental context.
-3. NO AI-ISMS: Maintain a clinical, academic tone. Avoid dramatic or emotional adjectives.
-4. EDITOR.JS FORMATTING & CITATIONS: NEVER use literal newline characters (\\n). Use HTML `<br><br>` for line breaks. You MUST cite your sources if a URL is provided. PREFERRED: Cite inline but you may also list source at the end if it can't come naturally inline. Always use HTML anchor tag with the actual title. ONLY omit the link if the Research Record explicitly lacks a matching URL.
-5. MULTIPLE NOTES: If you have enough info for more than one note, feel free to write multiple notes. Just don't repeat stuff.
-6. EXCEPTION HANDLING: If the Research Record states "No specific supplemental context found", DO NOT hallucinate a note. Instead, use the tool `draft_notes` to submit EXACTLY one block with the text: "No verifiable additional historical context could be retrieved for this archive."
-7. TOOL CALL: Call `draft_notes` with the archive ID and the formulated note content.
+1. ZERO FLUFF: Never write introductory sentences, conclusions, or generic cultural overviews. Go straight to the specific extra context to the archive.
+2. FLEXIBLE NOTE COUNT: Write anywhere from 1 to 4 notes depending entirely on the depth of the Research. If the research contains multiple distinct extra context for the archive, separate them into individual notes. If it only contains enough for one solid context, write exactly one note. Never merge clearly unrelated facts, and never artificially stretch a single fact into multiple notes just to meet a quota.
+3. ORGANIC CITATIONS: If the Research agent provides a source URL, weave it naturally and flexibly into the narrative (e.g., citing it inline, parenthetically, or organically as part of a sentence like 'According to...'). Vary your citation style so it sounds human. Always use an HTML anchor tag with the actual title.
+4. NO FORCED CITATIONS: If no specific URL is provided for a fact, do NOT try to force a citation and do NOT mention the lack of a link. Just state the fact clearly.
+5. NO DUPLICATION: Do not reiterate what is already in the archive Metadata. Provide ONLY new, supplemental context.
+6. FORMATTING: NEVER use literal newline characters (\\n). Use HTML `<br><br>` for line breaks. 
+7. EXCEPTION HANDLING: If the Research agent explicitly states no new context was found, do not hallucinate. Use the `draft_notes` tool to submit EXACTLY one block with the text: "No verifiable additional historical context could be retrieved for this archive."
+8. TOOL CALL: Call `draft_notes` with the archive ID and your formulated note(s).
 """.strip()
 )
 
 critic = Agent(
     name="CriticAgent",
     model=ResilientGemini(
-        model="models/gemma-4-26b-a4b-it",
-        fallbacks=["models/gemma-4-31b-it"]
+        model="models/gemini-3.1-flash-lite-preview",
+        fallbacks=["models/gemma-4-26b-a4b-it", "models/gemma-4-31b-it"]
     ),
     description="Agent: A ruthless gatekeeper that validates drafts against strict archival standards.",
     output_key="critic_status",
@@ -78,9 +79,11 @@ GOAL: Review drafts for maximum factual density and absolute zero fluff.
 
 STRICT REJECTION CRITERIA:
 1. REJECT if any note contains generalities, introductory filler, or generic encyclopedic definitions.
-2. REJECT if any note simply reiterates the existing metadata description or visual details without adding new external context.
-3. REJECT if the draft makes claims that are not explicitly backed by the Research Record or Vision Report.
-4. REJECT if literal `\\n` characters are used instead of `<br><br>`.
+2. REJECT if unrelated, distinct context are crammed into a single note (they should be split into different notes).
+3. REJECT if the writer artificially generated multiple notes when the context clearly only supported one single point or should be one note.
+4. REJECT if citations feel robotic, repetitive in structure across notes, or are awkwardly forced when no actual URL was provided in the source data.
+5. REJECT if the draft simply reiterates the existing archive metadata without adding new external context.
+6. REJECT if literal `\\n` characters are used instead of `<br><br>`.
 *EXCEPTION*: If the drafted note is exactly "No verifiable additional historical context could be retrieved for this archive.", you MUST approve it immediately.
 
 OUTPUT: Reply with APPROVED if the text is flawless or matches the exception string. Otherwise, list the specific rejection reasons.
