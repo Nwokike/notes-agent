@@ -79,8 +79,8 @@ notes_pipeline_agent = SequentialAgent(
 orchestrator = Agent(
     name="orchestrator",
     model=ResilientGemini(
-        model="models/gemma-4-31b-it",
-        fallbacks=["models/gemma-4-26b-a4b-it"]
+        model="models/gemma-4-26b-a4b-it",
+        fallbacks=["models/gemma-4-31b-it"]
     ),
     description="The root supervisor for the Igbo Archives Autonomous Notes System.",
     sub_agents=[notes_pipeline_agent],
