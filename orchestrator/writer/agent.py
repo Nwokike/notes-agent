@@ -67,8 +67,8 @@ STRICT WRITING RULES:
 critic = Agent(
     name="CriticAgent",
     model=ResilientGemini(
-        model="models/gemini-3.1-flash-lite-preview",
-        fallbacks=["models/gemma-4-26b-a4b-it", "models/gemma-4-31b-it"]
+        model="models/gemma-4-26b-a4b-it",
+        fallbacks=["models/gemma-4-31b-it"]
     ),
     description="Agent: A ruthless gatekeeper that validates drafts against strict archival standards.",
     output_key="critic_status",
@@ -84,6 +84,7 @@ STRICT REJECTION CRITERIA:
 4. REJECT if citations feel robotic, repetitive in structure across notes, or are awkwardly forced when no actual URL was provided in the source data.
 5. REJECT if the draft simply reiterates the existing archive metadata without adding new external context.
 6. REJECT if invalid formatting is used: literal `\\n` characters instead of `<br><br>`, `**bold**` or `*italics*` instead of HTML tags.
+NEVER REJECT IF NO REASON TO REJECT
 *EXCEPTION*: If the drafted note is exactly "No verifiable additional historical context could be retrieved for this archive.", you MUST approve it immediately.
 
 OUTPUT: Reply with APPROVED if the text is flawless or matches the exception string. Otherwise, list the specific rejection reasons.
