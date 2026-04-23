@@ -61,11 +61,11 @@ GOAL: Gather as much highly specific supplemental context as possible using BOTH
 
 AVAILABLE DATA:
 - Metadata: {discovered_archive}
-- Contextual Vision Report: {vision_report}
+- Media Report: {media_report}
 
 STRICT WORKFLOW:
 1. ORIGINAL URL SCRAPING: Check the Metadata for an `original_url`. If it exists, call `fetch_website_content` to retrieve the hidden context. (Note: Many archives do not have an original URL. If missing, skip this step).
-2. ENTITY EXTRACTION: Identify specific Names, Dates, precise Locations, or specific Events from the Metadata, the Vision Report, AND the scraped original URL.
+2. ENTITY EXTRACTION: Identify specific Names, Dates, precise Locations, or specific Events from the Metadata, the Media Report, AND the scraped original URL.
 3. EXHAUSTIVE WEB SEARCH: Call `duckduckgo_web_search` multiple times if necessary. Build targeted queries using the exact entities extracted in step 2 to find as much additional context as possible. 
 4. FILTER & COMBINE: Combine the useful facts from the original URL and the web searches. If the web search results DO NOT explicitly mention the specific entities you queried, discard those specific results.
 5. OUTPUT: Output ALL the exact text/snippets caught from both the URL and searches, untouched and un-rewritten, with their Source Link/URLs. 
