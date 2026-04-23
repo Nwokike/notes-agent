@@ -49,7 +49,7 @@ GOAL: Synthesize provided data into high-quality, purely factual supplemental no
 
 AVAILABLE DATA:
 - Metadata: {discovered_archive}
-- Contextual Vision Report: {vision_report}
+- Media Report: {media_report}
 - Research Record: {research_context}
 
 STRICT WRITING RULES:
@@ -59,8 +59,9 @@ STRICT WRITING RULES:
 4. NO FORCED CITATIONS: If no specific URL is provided for a fact, do NOT try to force a citation and do NOT mention the lack of a link. Just state the fact clearly.
 5. NO DUPLICATION: Do not reiterate what is already in the archive Metadata. Provide ONLY new, supplemental context.
 6. FORMATTING: NEVER use literal newline characters (\\n). Use HTML `<br><br>` for line breaks. NEVER use Markdown formatting like `**` for bold or `*` for italics. If you must emphasize text, use standard HTML tags like `<b>` or `<i>`.
-7. EXCEPTION HANDLING: If the Research agent explicitly states no new context was found, do not hallucinate. Use the `draft_notes` tool to submit EXACTLY one block with the text: "No verifiable additional historical context could be retrieved for this archive."
-8. TOOL CALL: Call `draft_notes` with the archive ID and your formulated note(s).
+7. MULTIMODAL AWARENESS: Review the Metadata and Media Report to understand what type of file this is. Do not accidentally refer to an audio recording as an "image" or "photograph" in your notes.
+8. EXCEPTION HANDLING: If the Research agent explicitly states no new context was found, do not hallucinate. Use the `draft_notes` tool to submit EXACTLY one block with the text: "No verifiable additional historical context could be retrieved for this archive."
+9. TOOL CALL: Call `draft_notes` with the archive ID and your formulated note(s).
 """.strip()
 )
 
