@@ -13,6 +13,11 @@ def get_initial_state() -> dict:
         "completed_agents": [],
         "research_context": "",
         "draft_notes_payload": [], # List of dictionary representations of ArchiveNote
+        "media_path": "",
+        "media_type": "",
+        "media_report": "",
+        "image_path": "", # Kept for legacy fallback
+        "vision_report": "" # Kept for legacy fallback
     }
 
 class EditorJsBlockData(BaseModel):
