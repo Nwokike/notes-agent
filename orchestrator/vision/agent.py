@@ -22,10 +22,12 @@ def _encode_and_compress_image(image_path: str, max_size=(1024, 1024)) -> str:
 
 async def execute_vision_analysis(ctx: Context) -> str:
     """Contextual visual analysis grounded in the archive's metadata."""
-    image_path = ctx.state.get("image_path")
+    
+    # FIX 1: Look for the universal media_path first
+    image_path = ctx.state.get("media_path", ctx.state.get("image_path"))
     discovered_archive = ctx.state.get("discovered_archive", {})
     
-    if not image_path or not os.path.exists(image_path):
+    if not image_path or image_path == "NONE" or not os.path.exists(image_path):
         return "ERROR: Image not found for analysis."
         
     try:
@@ -58,7 +60,9 @@ async def execute_vision_analysis(ctx: Context) -> str:
                 )
                 
                 result_text = response.text
-                ctx.state["vision_report"] = result_text
+                
+                # FIX 2: Hoist success to the universal media_report key
+                ctx.state["media_report"] = result_text
                 return result_text
             except Exception:
                 continue
