@@ -1,3 +1,6 @@
+import os
+import requests
+import tempfile
 from google.adk.agents import Agent, SequentialAgent, Context
 from google.adk.models import Gemini
 from .utils.resilience import ResilientGemini
@@ -6,10 +9,8 @@ from .researcher.agent import researcher_agent
 from .writer.agent import writer_loop
 from .publisher.agent import publisher_agent
 from .vision.agent import execute_vision_analysis
+from .audio.agent import execute_audio_analysis  # NEW: We will create this file next
 from .mcp_client import call_mcp_tool
-import os
-import requests
-import tempfile
 
 __all__ = ["root_agent"]
 
@@ -45,25 +46,44 @@ async def fetch_unnoted_archive(ctx: Context) -> dict:
         if isinstance(full_archive_resp, dict) and "id" in full_archive_resp:
             target_archive = full_archive_resp
             
-        # Download image for vision processing
-        image_url = target_archive.get("image") or target_archive.get("thumbnail")
-        if image_url:
+        # 1. MULTIMODAL DETECTION & DOWNLOAD
+        # Try to get audio, video, then fallback to image/thumbnail
+        media_url = target_archive.get("audio") or target_archive.get("video") or target_archive.get("image") or target_archive.get("thumbnail")
+        media_type = target_archive.get("archive_type", "image").lower()
+        
+        ctx.state["media_type"] = media_type
+        ctx.state["media_path"] = "NONE"
+        
+        if media_url:
             try:
-                response = requests.get(image_url, timeout=10)
+                # Increased timeout to handle heavier audio/video files
+                response = requests.get(media_url, timeout=30)
                 if response.status_code == 200:
                     temp_dir = tempfile.gettempdir()
-                    image_path = os.path.join(temp_dir, f"archive_{target_archive['id']}.jpg")
-                    with open(image_path, "wb") as f:
+                    # Extract basic extension from URL or fallback
+                    ext = media_url.split('.')[-1][:4] if '.' in media_url else 'bin'
+                    ext = ''.join(e for e in ext if e.isalnum())
+                    
+                    media_path = os.path.join(temp_dir, f"archive_{target_archive['id']}.{ext}")
+                    with open(media_path, "wb") as f:
                         f.write(response.content)
-                    ctx.state["image_path"] = image_path
+                    
+                    # Set the new universal paths
+                    ctx.state["media_path"] = media_path
+                    ctx.state["image_path"] = media_path # Kept for legacy fallback
             except Exception as e:
-                print(f"Image download failed: {e}")
+                print(f"Media download failed: {e}")
 
         # Sets the discovered archive directly into state so the researcher can access it
         ctx.state["discovered_archive"] = target_archive
         ctx.state["target_archive_id"] = target_archive["id"]
         
-        return {"status": "FOUND", "archive_id": target_archive["id"]}
+        return {
+            "status": "FOUND", 
+            "archive_id": target_archive["id"],
+            "media_type": media_type,
+            "media_path": ctx.state["media_path"]
+        }
         
     except Exception as e:
         return {"error": str(e)}
@@ -84,15 +104,18 @@ orchestrator = Agent(
     ),
     description="The root supervisor for the Igbo Archives Autonomous Notes System.",
     sub_agents=[notes_pipeline_agent],
-    tools=[fetch_unnoted_archive, execute_vision_analysis],
+    tools=[fetch_unnoted_archive, execute_vision_analysis, execute_audio_analysis],
     instruction="""
 ROLE:
 Chief Orchestrator of the Igbo Notes Autonomous Creation System.
 
 STRICT WORKFLOW:
 1. DATA FETCH: Call `fetch_unnoted_archive` to find an unnoted archive. 
-2. BLIND VISION ANALYSIS: Call `execute_vision_analysis`. This performs a purely visual, unbiased check of the image.
-3. VALIDATION: Cross-reference the discovered archive metadata with the vision report. If they mismatch or vision fails, state the reason and STOP.
+2. MEDIA ROUTING & ANALYSIS: Review the `media_type` returned by `fetch_unnoted_archive`.
+   - If `media_type` is "image": Call the `execute_vision_analysis` tool blind.
+   - If `media_type` is "audio" or "video": Call the `execute_audio_analysis` tool blind.
+   - If `media_type` is "document": Skip media analysis and move to VALIDATION.
+3. VALIDATION: Cross-reference the discovered archive metadata with the media report. If they completely mismatch or media analysis fails, state the reason and STOP.
 4. PIPELINE TRIGGER: If valid, trigger `execute_notes_pipeline`.
 
 RULES: Keep responses clinical, professional, and brief. No conversational filler.
