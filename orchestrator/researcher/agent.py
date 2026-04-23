@@ -48,8 +48,8 @@ async def duckduckgo_web_search(query: str) -> str:
 researcher_agent = Agent(
     name="ResearcherAgent",
     model=ResilientGemini(
-        model="models/gemma-4-31b-it",
-        fallbacks=["models/gemini-3.1-flash-lite-preview", "models/gemma-4-26b-a4b-it"]
+        model="models/gemini-3.1-flash-lite-preview",
+        fallbacks=["models/gemma-4-31b-it", "models/gemma-4-26b-a4b-it"]
     ),
     description="Agent: Gathers maximum supplemental context by scraping the original archive URL and performing multiple targeted web searches.",
     tools=[fetch_website_content, duckduckgo_web_search],
